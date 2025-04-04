@@ -5,6 +5,8 @@ import io
 import time
 import json
 import os
+import time
+from googleapiclient.errors import HttpError
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
@@ -64,6 +66,35 @@ else:
 
 # 4時間後に終了するための時間を設定
 end_time = datetime.now() + timedelta(hours=4)
+
+# Google Drive へのアップロード処理
+def upload_to_drive(file_id, file_name, data_frame):
+    max_retries = 3  # 3回までリトライ
+    for attempt in range(max_retries):
+        try:
+            with io.BytesIO() as fh:
+                with pd.ExcelWriter(fh, engine='xlsxwriter') as writer:
+                    data_frame.to_excel(writer, index=False)
+                fh.seek(0)
+                media = MediaIoBaseUpload(fh, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+                if file_id:
+                    drive_service.files().update(fileId=file_id, media_body=media).execute()
+                else:
+                    file_metadata = {"name": file_name, "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
+                    drive_service.files().create(body=file_metadata, media_body=media).execute()
+            
+            print(f"ファイル {file_name} をGoogle Driveにアップロードしました。")
+            return  # 成功したらループを抜ける
+
+        except HttpError as e:
+            print(f"アップロード失敗 ({attempt+1}/{max_retries}) - {e}")
+            time.sleep(5)  # 5秒待ってリトライ
+        except Exception as e:
+            print(f"予期せぬエラー: {e}")
+            break  # 予期しないエラーならリトライしない
+
+upload_to_drive(history_id, history_file, history_df)
 
 # チャットをリアルタイムで記録
 while chat.is_alive():
