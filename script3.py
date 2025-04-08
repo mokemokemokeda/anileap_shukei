@@ -60,7 +60,7 @@ else:
 
 # チャット収集ループ（最大4時間）
 start_time = time.time()
-MAX_DURATION = 900  #15分ごとに変更
+MAX_DURATION = 600  #10分ごとに変更
 
 while chat.is_alive() and (time.time() - start_time < MAX_DURATION):
     new_data = []
