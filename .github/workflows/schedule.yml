@@ -2,7 +2,7 @@ name: anileap shukei
 
 on:
   schedule:
-    - cron: '*/7 * * * *' #7分ごとに実行
+    - cron: '*/5 * * * *' #5分ごとに実行
   workflow_dispatch:  #手動実行
 
 jobs:
